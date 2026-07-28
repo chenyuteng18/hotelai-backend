@@ -404,12 +404,14 @@ async function createAlert(alertType, severity, pipelineName, hotelId, message, 
 }
 
 async function getUnacknowledgedAlerts(hotelId) {
-  const result = await pool.query(
-    `SELECT * FROM pipeline_alerts
-     WHERE ($1 IS NULL OR hotel_id = $1) AND acknowledged = false
-     ORDER BY created_at DESC LIMIT 50`,
-    [hotelId || null]
-  );
+  let query = 'SELECT * FROM pipeline_alerts WHERE acknowledged = false';
+  const params = [];
+  if (hotelId) {
+    query += ' AND hotel_id = $1';
+    params.push(hotelId);
+  }
+  query += ' ORDER BY created_at DESC LIMIT 50';
+  const result = await pool.query(query, params);
   return result.rows;
 }
 
