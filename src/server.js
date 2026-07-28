@@ -18,6 +18,8 @@ const adminRoutes = require('./routes/admin');
 const reportsRoutes = require('./routes/reports');
 const agentsRoutes = require('./routes/agents');
 const snapshotsRoutes = require('./routes/snapshots');
+const pipelineRoutes = require('./routes/pipeline');
+const tokenService = require('./services/tokenService');
 
 const app = express();
 
@@ -52,6 +54,9 @@ app.use('/api/v1/reports', authenticate, reportsRoutes);
 app.use('/api/v1/agents', agentsRoutes);
 app.use('/api/v1/snapshots', snapshotsRoutes);
 
+// M2 Data Pipeline API
+app.use('/api/v1/pipeline', authenticate, pipelineRoutes);
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'not_found', message: '接口不存在' });
@@ -68,6 +73,8 @@ const HOST = process.env.API_HOST || '0.0.0.0';
 
 app.listen(PORT, HOST, () => {
   console.log(`HotelAI API server running on http://${HOST}:${PORT}`);
+  // Start M2 data pipeline scheduler
+  tokenService.start();
 });
 
 module.exports = app;
