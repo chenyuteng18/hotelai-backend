@@ -33,9 +33,9 @@ router.get('/', async (req, res) => {
       room_type_name: roomTypeName,
       forecasts: result.rows.map(r => ({
         target_date: r.target_date,
-        predicted_occ: parseFloat(r.predicted_occ),
-        predicted_adr: parseFloat(r.predicted_adr),
-        predicted_revpar: parseFloat(r.predicted_revpar),
+        predicted_occ: r.predicted_occ != null ? parseFloat(r.predicted_occ) : null,
+        predicted_adr: r.predicted_adr != null ? parseFloat(r.predicted_adr) : null,
+        predicted_revpar: r.predicted_revpar != null ? parseFloat(r.predicted_revpar) : null,
         confidence: r.confidence,
       })),
       generated_at: generatedAt,

@@ -23,6 +23,18 @@ async function initDb() {
   try {
     await client.query(schema);
     console.log('Database schema initialized successfully.');
+
+    const migrationsDir = path.resolve(__dirname, 'migrations');
+    if (fs.existsSync(migrationsDir)) {
+      const files = fs.readdirSync(migrationsDir)
+        .filter(f => f.endsWith('.sql'))
+        .sort();
+      for (const file of files) {
+        const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf-8');
+        await client.query(sql);
+        console.log(`Migration applied: ${file}`);
+      }
+    }
   } catch (err) {
     console.error('Error initializing database:', err);
     throw err;

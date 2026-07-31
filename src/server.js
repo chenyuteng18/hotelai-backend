@@ -19,6 +19,7 @@ const reportsRoutes = require('./routes/reports');
 const agentsRoutes = require('./routes/agents');
 const snapshotsRoutes = require('./routes/snapshots');
 const pipelineRoutes = require('./routes/pipeline');
+const calendarRoutes = require('./routes/calendar');
 const tokenService = require('./services/tokenService');
 
 const app = express();
@@ -56,6 +57,9 @@ app.use('/api/v1/snapshots', snapshotsRoutes);
 
 // M2 Data Pipeline API
 app.use('/api/v1/pipeline', authenticate, pipelineRoutes);
+
+// Calendar API
+app.use('/api/v1/calendar', authenticate, calendarRoutes);
 
 // 404 handler
 app.use((req, res) => {

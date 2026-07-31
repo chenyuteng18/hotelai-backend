@@ -31,14 +31,16 @@ router.post('/batch', async (req, res) => {
           [snap.hotel_id, null, snap.target_date, snap.price, 'high']
         );
 
-        // Update agent collection status
+        // Update agent collection status (parameterized to prevent SQL injection)
+        const sourceType = (snap.source_type || 'self_price').replace(/[^a-z_]/g, '');
+        const dataStatus = (snap.data_status || 'fresh').replace(/[^a-z_]/g, '');
         await pool.query(
           `UPDATE agents SET collection_status = jsonb_set(
             COALESCE(collection_status, '{}'),
-            '{${snap.source_type || 'self_price'}}',
-            '"${snap.data_status || 'fresh'}"'
+            $2,
+            $3
           ) WHERE agent_id = $1`,
-          [agent_id]
+          [agent_id, `{${sourceType}}`, JSON.stringify(dataStatus)]
         );
 
         accepted++;

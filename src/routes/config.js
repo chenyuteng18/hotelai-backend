@@ -118,4 +118,42 @@ router.get('/feature-flags', async (req, res) => {
   }
 });
 
+// PUT /config/feature-flags
+router.put('/feature-flags', async (req, res) => {
+  try {
+    const hotelId = req.user.hotel_id;
+    const { flags } = req.body;
+
+    if (!flags || typeof flags !== 'object') {
+      return res.status(400).json({ error: 'invalid_request', message: 'flags 对象为必填' });
+    }
+
+    const current = await pool.query(
+      'SELECT flags FROM feature_flags WHERE hotel_id = $1', [hotelId]
+    );
+    const oldFlags = current.rows.length > 0
+      ? (typeof current.rows[0].flags === 'string' ? JSON.parse(current.rows[0].flags) : current.rows[0].flags)
+      : {};
+    const mergedFlags = { ...oldFlags, ...flags };
+
+    await pool.query(
+      `INSERT INTO feature_flags (hotel_id, flags)
+       VALUES ($1, $2)
+       ON CONFLICT (hotel_id) DO UPDATE SET flags = $2, updated_at = NOW()`,
+      [hotelId, JSON.stringify(mergedFlags)]
+    );
+
+    await pool.query(
+      `INSERT INTO audit_log (tenant_id, actor_user_id, action, resource_type, resource_id, details, ip_address)
+       VALUES ($1, $2, 'feature_flags_updated', 'config', $3, $4, $5)`,
+      [req.user.tenant_id, req.user.id, hotelId, JSON.stringify({ old: oldFlags, new: mergedFlags }), req.ip]
+    );
+
+    res.json({ status: 'updated', hotel_id: hotelId, flags: mergedFlags });
+  } catch (err) {
+    console.error('Update feature flags error:', err);
+    res.status(500).json({ error: 'internal_error', message: '系统异常，请稍后重试' });
+  }
+});
+
 module.exports = router;
