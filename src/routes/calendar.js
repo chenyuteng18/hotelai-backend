@@ -7,8 +7,18 @@ const router = express.Router();
 router.get('/monthly', async (req, res) => {
   try {
     const hotelId = req.user.hotel_id;
-    const year = parseInt(req.query.year) || new Date().getFullYear();
-    const month = parseInt(req.query.month) || new Date().getMonth() + 1;
+
+    let year, month;
+    if (req.query.month && /^\d{4}-\d{2}$/.test(req.query.month)) {
+      [year, month] = req.query.month.split('-').map(Number);
+    } else {
+      year = parseInt(req.query.year) || new Date().getFullYear();
+      month = parseInt(req.query.month) || new Date().getMonth() + 1;
+    }
+
+    if (!year || !month || month < 1 || month > 12) {
+      return res.status(400).json({ error: 'invalid_request', message: 'month参数格式应为YYYY-MM' });
+    }
 
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endMonth = month === 12 ? 1 : month + 1;
